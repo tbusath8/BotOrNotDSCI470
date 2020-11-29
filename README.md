@@ -13,6 +13,7 @@ CONSUMER_SECRET = "XXXXX"
 
 Create a virtual environment with requirements.txt and activate it
 ```
+cd BotOrNotDSCI470
 python -m venv env
 env\Scripts\activate.bat
 ```
