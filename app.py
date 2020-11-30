@@ -43,6 +43,9 @@ api = tweepy.API(auth)
 df = pd.DataFrame(columns = ['friend_follower_ratio','favourites_count','followers_count','friends_count','listed_count','protected','statuses_count','verified', 'tweets_per_day', 'favourites_per_day'])
 
 def predictUser(username):
+    # Allows user to use @ as part of the handle
+    if(username[0]=="@"):
+        username = username[1:]
     try:
         user = api.get_user(username)
 
@@ -109,7 +112,7 @@ app.layout = html.Div(
             data = means.to_dict('records'),
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in means.columns]
         ),
-        html.Img(id = 'img',height = 500)
+        html.Img(id = 'img',height = 100)
         # dcc.Textarea(id='output'),
     ],className="six columns"
 )
