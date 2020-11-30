@@ -115,9 +115,9 @@ def predictUser(username):
         # print("%.2f" % (prediction[0]*100),"% ",'bot')
         # print("%.2f" % (prediction[1]*100),"% ",'not')
         pred1 = prediction[0]*100
-        pred1 = "{:.2f}".format(pred1)+"% "+'bot'
+        pred1 = "Bot: {:.2f}%".format(pred1)
         pred2 = prediction[1]*100
-        pred2 = "{:.2f}".format(pred2)+"% "+'not'
+        pred2 = "Not: {:.2f}%".format(pred2)
         retPred = pred1 + '\n' + pred2
         legit = True
         return retPred,Xnew,imurl,legit
@@ -138,13 +138,14 @@ app.layout = html.Div(
         dcc.Input(id="input1", type="text", placeholder="",debounce=True),
         html.Br(),
         html.Img(id = 'img',height = 100),
-        html.Div(id="output",children = ""),
+        html.Div(id="output", children = ""),
+        html.H3("User's Features:"),
         dash_table.DataTable(
             id='table',
             editable = False,
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns],
             ),
-        html.H2("Median Bot Features:"),
+        html.H3("Median Bot Features:"),
         dash_table.DataTable(
             id='medians',
             data = medians.to_dict('records'),
@@ -194,7 +195,7 @@ def update_output(input1):
             url = imurl[0][:-11]+imurl[0][-4:]
         except:
             url = ''
-        return bot,df.to_dict('records'),url,style_table_by_z_value(df,means,stds)
+        return bot, df.to_dict('records'), url, style_table_by_z_value(df,means,stds)
 
 
 if __name__ == "__main__":
