@@ -20,11 +20,18 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore')
 model = pickle.load(open('model.pickle.dat', "rb"))
 means = pickle.load(open('means.pickle.dat', "rb"))
+stds = pickle.load(open('stds.pickle.dat', "rb"))
+medians = pickle.load(open('medians.pickle.dat', "rb"))
 
 means = pd.DataFrame(means).T
 sig_fig = 3
 for col in means.columns:
     means[col] = round(float(means[col][0]),sigfigs= sig_fig)
+
+medians = pd.DataFrame(medians).T
+sig_fig = 3
+for col in medians.columns:
+    medians[col] = round(float(medians[col][0]),sigfigs= sig_fig)
 
 # assign the values accordingly
 consumer_key = CONSUMER_KEY
@@ -41,6 +48,34 @@ auth.set_access_token(access_token, access_token_secret)
 # calling the api
 api = tweepy.API(auth)
 df = pd.DataFrame(columns = ['friend_follower_ratio','favourites_count','followers_count','friends_count','listed_count','protected','statuses_count','verified', 'tweets_per_day', 'favourites_per_day'])
+
+def style_table_by_z_value(df,means,stds):
+    if 'id' in df:
+        numeric_columns = df.select_dtypes('number').drop(['id'], axis=1)
+    else:
+        numeric_columns = df.select_dtypes('number')
+    max_across_numeric_columns = numeric_columns.max()
+    max_across_table = max_across_numeric_columns.max()
+    zs = df.drop(['verified','protected'],axis=1) - means/stds
+    zs = abs(zs.where((zs >3) | (zs <-3),0))
+    # print(zs[''])
+    styles = []
+    for col in numeric_columns:
+        # print(col)
+        # print(zs[col][0])
+        if zs[col][0] != 0:
+            styles.append({
+                'if': {
+                    'filter_query': '{{{col}}} != {value}'.format(
+                        col=0, value=zs[col][0]
+                    ),
+                    'column_id': col
+                },
+                'backgroundColor': '#F45D5D',
+                'color': 'white'
+            })
+    return styles
+
 
 def predictUser(username):
     # Allows user to use @ as part of the handle
@@ -106,13 +141,13 @@ app.layout = html.Div(
         html.Div(id="output",children = ""),
         dash_table.DataTable(
             id='table',
-
-            columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns]
-        ),
-        html.H2("Average Bot Features:"),
+            editable = False,
+            columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns],
+            ),
+        html.H2("Median Bot Features:"),
         dash_table.DataTable(
-            id='means',
-            data = means.to_dict('records'),
+            id='medians',
+            data = medians.to_dict('records'),
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in means.columns]
         ),
         
@@ -126,6 +161,7 @@ app.layout = html.Div(
     Output("output", "children"),
     Output("table", 'data'),
     Output("img",'src'),
+    Output("table",'style_data_conditional'),
     Input("input1", "value"),
 
 )
@@ -133,7 +169,7 @@ def update_output(input1):
     # print(input1)
     df = pd.DataFrame(columns = ['friend_follower_ratio','favourites_count','followers_count','friends_count','listed_count','protected','statuses_count','verified', 'tweets_per_day', 'favourites_per_day'])
     if input1 == None:
-        return '',df.round(1).to_dict('records'),''
+        return '',df.round(1).to_dict('records'),'',style_table_by_z_value(df,means,stds)
     else:
         # print(input1)
 
@@ -143,16 +179,22 @@ def update_output(input1):
 
             # print('days_exist',df['days_exist'][0])
             sig_fig = 2
-
+            # print(df.columns)
             df['friend_follower_ratio'] =round(float(df['friend_follower_ratio'][0]), sigfigs = sig_fig)#.round(6)
             df['tweets_per_day'] = round(float(df['tweets_per_day'][0]),sigfigs=sig_fig)
             df['favourites_per_day'] = round(float(df['favourites_per_day'][0]),sigfigs=sig_fig)
+
+            zs = df.drop(['verified','protected'],axis=1) - means/stds
+            zs = abs(zs.where((zs >3) | (zs <-3),0))
+            # print(zs)
+
+            # layout =
         # print(Xnew.head())
         try:
             url = imurl[0][:-11]+imurl[0][-4:]
         except:
             url = ''
-        return bot,df.to_dict('records'),url
+        return bot,df.to_dict('records'),url,style_table_by_z_value(df,means,stds)
 
 
 if __name__ == "__main__":
