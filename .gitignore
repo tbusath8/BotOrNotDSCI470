@@ -2,3 +2,5 @@ data/
 env/
 __pycache__/
 twitter_credentials.py
+.ipynb_checkpoints/
+.virtual_documents/
