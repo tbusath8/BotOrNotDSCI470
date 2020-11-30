@@ -21,10 +21,17 @@ warnings.simplefilter(action='ignore')
 model = pickle.load(open('model.pickle.dat', "rb"))
 means = pickle.load(open('means.pickle.dat', "rb"))
 stds = pickle.load(open('stds.pickle.dat', "rb"))
+medians = pickle.load(open('medians.pickle.dat', "rb"))
+
 means = pd.DataFrame(means).T
 sig_fig = 3
 for col in means.columns:
     means[col] = round(float(means[col][0]),sigfigs= sig_fig)
+
+medians = pd.DataFrame(medians).T
+sig_fig = 3
+for col in medians.columns:
+    medians[col] = round(float(medians[col][0]),sigfigs= sig_fig)
 
 # assign the values accordingly
 consumer_key = CONSUMER_KEY
@@ -131,10 +138,10 @@ app.layout = html.Div(
             editable = False,
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns],
             ),
-        html.H2("Average Bot Features:"),
+        html.H2("Median Bot Features:"),
         dash_table.DataTable(
-            id='means',
-            data = means.to_dict('records'),
+            id='medians',
+            data = medians.to_dict('records'),
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in means.columns]
         ),
         html.Img(id = 'img',height = 500)
