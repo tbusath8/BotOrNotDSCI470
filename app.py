@@ -44,7 +44,7 @@ df = pd.DataFrame(columns = ['friend_follower_ratio','favourites_count','followe
 
 def predictUser(username):
     # Allows user to use @ as part of the handle
-    if(username[0]=="@"):
+    if(username != "" and username[0]=="@"):
         username = username[1:]
     try:
         user = api.get_user(username)
@@ -97,9 +97,12 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div(
     [
+        html.H1("Bot or Not"),
         html.I("Enter Username:"),
         html.Br(),
         dcc.Input(id="input1", type="text", placeholder="",debounce=True),
+        html.Br(),
+        html.Img(id = 'img',height = 100),
         html.Div(id="output",children = ""),
         dash_table.DataTable(
             id='table',
@@ -112,7 +115,7 @@ app.layout = html.Div(
             data = means.to_dict('records'),
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in means.columns]
         ),
-        html.Img(id = 'img',height = 100)
+        
         # dcc.Textarea(id='output'),
     ],className="six columns"
 )
