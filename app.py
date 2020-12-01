@@ -14,7 +14,8 @@ import pandas as pd
 from datetime import datetime
 from string import capwords
 from sigfig import round
-
+import plotly.express as px
+import plotly.graph_objects as go
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore')
@@ -22,6 +23,11 @@ model = pickle.load(open('model.pickle.dat', "rb"))
 means = pickle.load(open('means.pickle.dat', "rb"))
 stds = pickle.load(open('stds.pickle.dat', "rb"))
 medians = pickle.load(open('medians.pickle.dat', "rb"))
+mediansNotBot = pickle.load(open('mediansNotBot.pickle.dat', "rb"))
+logBotData = pickle.load(open('logBotData.pickle.dat', "rb"))
+logNotBotData = pickle.load(open('logNotBotData.pickle.dat', "rb"))
+BotData = pickle.load(open('BotData.pickle.dat', "rb"))
+NotBotData = pickle.load(open('NotBotData.pickle.dat', "rb"))
 
 means = pd.DataFrame(means).T
 sig_fig = 3
@@ -32,8 +38,18 @@ medians = pd.DataFrame(medians).T
 sig_fig = 3
 for col in medians.columns:
     medians[col] = round(float(medians[col][0]),sigfigs= sig_fig)
+medians['verified'] = medians['verified'].replace(0,False)
+medians['protected'] = medians['protected'].replace(0,False)
 
+mediansNotBot = pd.DataFrame(mediansNotBot).T
+sig_fig = 3
+for col in mediansNotBot.columns:
+    mediansNotBot[col] = round(float(mediansNotBot[col][0]),sigfigs= sig_fig)
+mediansNotBot['verified'] = mediansNotBot['verified'].replace(0,False)
+mediansNotBot['protected'] = mediansNotBot['protected'].replace(0,False)
 # assign the values accordingly
+
+
 consumer_key = CONSUMER_KEY
 consumer_secret = CONSUMER_SECRET
 access_token = ACCESS_TOKEN
@@ -131,29 +147,83 @@ external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div(
-    [
-        html.H1("Bot or Not"),
+    [html.H1("Bot or Not"),
+    html.Div(
+
+        [html.Div([
         html.I("Enter Username:"),
         html.Br(),
         dcc.Input(id="input1", type="text", placeholder="",debounce=True),
         html.Br(),
-        html.Img(id = 'img',height = 100),
-        html.Div(id="output", children = ""),
-        html.H3("User's Features:"),
+        html.Div(id="output", children = "")
+        ],className = 'three columns'),
+        html.Div([
+            html.Img(id = 'img',height = 100),
+            ],className = 'nine columns')
+
+        ,],className = 'row',
+        ),
+    html.Div([
+        html.H5("User's Features:"),
+        html.I("Red indicates outlier compared to bot features"),
         dash_table.DataTable(
             id='table',
+            style_cell={
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
             editable = False,
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns],
             ),
-        html.H3("Median Bot Features:"),
+        html.H5("Median Bot Features:"),
         dash_table.DataTable(
             id='medians',
+            style_cell={
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
             data = medians.to_dict('records'),
-            columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in means.columns]
+            columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns]
         ),
-        
-        # dcc.Textarea(id='output'),
-    ],className="six columns"
+        html.H5("Median Not Bot Features:"),
+
+        dash_table.DataTable(
+            id='mediansNotBot',
+            style_cell={
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
+            data = mediansNotBot.to_dict('records'),
+            columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns]
+        ),
+        html.Br(),
+        html.Div([
+            html.Div([
+                html.Label(["Select Bots or Not Bots:",
+                dcc.Dropdown(id='graph_dropdown_df',
+                            value = 'Bots',
+                            options=[{'label': i, 'value':i}for i in ['Bots','Not Bots']]
+                        ),]),
+
+                ],className = "six columns"),
+            html.Div([
+                html.Label(["Select Metric: ",
+                dcc.Dropdown(id='graph_dropdown',
+                            value = 'friend_follower_ratio',
+                            options=[{'label': capwords(i.replace('_', ' ')), 'value':i}for i in df.columns]
+                            ),]),
+                ],className = "six columns"),
+
+            ],className="row"),
+            html.Div([
+                dcc.Graph(id = 'hist'),
+                ],className = "row")
+
+
+
+            ],className = "row")
+
+    ]
 )
 
 
@@ -197,6 +267,21 @@ def update_output(input1):
             url = ''
         return bot, df.to_dict('records'), url, style_table_by_z_value(df,means,stds)
 
+@app.callback(
+    Output("hist", "figure"),
+    Input("graph_dropdown", "value"),
+    Input("graph_dropdown_df","value")
+
+)
+def updateHistogram(column,data):
+    # print(input2)
+    if data == 'Bots':
+        label = capwords(column.replace('_', ' '))
+        # print(label)
+        return px.histogram(BotData,x=column,labels={column:label})
+    else:
+        label = capwords(column.replace('_', ' '))
+        return px.histogram(NotBotData,x=column,labels={column:label})
 
 if __name__ == "__main__":
     app.run_server(debug=True)
