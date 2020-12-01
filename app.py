@@ -29,6 +29,7 @@ logNotBotData = pickle.load(open('logNotBotData.pickle.dat', "rb"))
 BotData = pickle.load(open('BotData.pickle.dat', "rb"))
 NotBotData = pickle.load(open('NotBotData.pickle.dat', "rb"))
 
+features = ['friend_follower_ratio', 'favourites_count', 'friends_count', 'statuses_count', 'tweets_per_day', 'favourites_per_day']
 means = pd.DataFrame(means).T
 sig_fig = 3
 for col in means.columns:
@@ -63,7 +64,7 @@ auth.set_access_token(access_token, access_token_secret)
 
 # calling the api
 api = tweepy.API(auth)
-df = pd.DataFrame(columns = ['friend_follower_ratio','favourites_count','followers_count','friends_count','listed_count','protected','statuses_count','verified', 'tweets_per_day', 'favourites_per_day'])
+df = pd.DataFrame(columns = features)
 
 def style_table_by_z_value(df,means,stds):
     if 'id' in df:
@@ -72,7 +73,7 @@ def style_table_by_z_value(df,means,stds):
         numeric_columns = df.select_dtypes('number')
     max_across_numeric_columns = numeric_columns.max()
     max_across_table = max_across_numeric_columns.max()
-    zs = df.drop(['verified','protected'],axis=1) - means/stds
+    zs = df - means/stds
     zs = abs(zs.where((zs >3) | (zs <-3),0))
     # print(zs[''])
     styles = []
@@ -107,7 +108,7 @@ def predictUser(username):
 
         ###
         apiKeep = ['profile_image_url_https','favourites_count','url','followers_count','friends_count','lang','listed_count','protected','statuses_count','verified','created_at']
-        features = ['friend_follower_ratio','favourites_count','followers_count','friends_count','listed_count','protected','statuses_count','verified', 'tweets_per_day', 'favourites_per_day']
+        features = ['friend_follower_ratio', 'favourites_count', 'friends_count', 'statuses_count', 'tweets_per_day', 'favourites_per_day']
 
         dfTest = json_normalize(jsonify_tweepy(user))
         dfTest = dfTest[apiKeep]
@@ -255,7 +256,7 @@ def update_output(input1):
             df['tweets_per_day'] = round(float(df['tweets_per_day'][0]),sigfigs=sig_fig)
             df['favourites_per_day'] = round(float(df['favourites_per_day'][0]),sigfigs=sig_fig)
 
-            zs = df.drop(['verified','protected'],axis=1) - means/stds
+            zs = df- means/stds
             zs = abs(zs.where((zs >3) | (zs <-3),0))
             # print(zs)
 
