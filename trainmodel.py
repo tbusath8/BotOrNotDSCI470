@@ -98,7 +98,7 @@ warnings.simplefilter(action='ignore')
 # for i in cols:
 #   print(i)
 keep = ['botornot','favourites_count','url','followers_count','friends_count','lang','listed_count','protected','statuses_count','verified','updated','created_at']
-features = ['friend_follower_ratio','favourites_count','followers_count','friends_count','listed_count','protected','statuses_count','verified', 'tweets_per_day', 'favourites_per_day']
+features = ['friend_follower_ratio','favourites_count','friends_count','statuses_count','tweets_per_day','favourites_per_day']
 usersThomasSel = usersThomas[keep]
 
 usersThomasSel['friend_follower_ratio']=usersThomasSel['friends_count']/(usersThomasSel['followers_count']+1)
