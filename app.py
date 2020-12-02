@@ -176,6 +176,8 @@ app.layout = html.Div(
             editable = False,
             columns = [{"name": capwords(i.replace('_', ' ')), "id": i,'type': 'numeric',"format":Format(group=',')} for i in df.columns],
             ),
+        html.Hr(),
+        html.H4("Data Set Information"),
         html.H5("Median Bot Features:"),
         dash_table.DataTable(
             id='medians',
